@@ -2,6 +2,7 @@ package golang_goroutine_udemy
 
 import (
 	"fmt"
+	"strconv"
 	"testing"
 	"time"
 )
@@ -82,4 +83,82 @@ func TestBufferedChannel(t *testing.T) {
 
 	time.Sleep(2 * time.Second)
 	fmt.Println("End")
+}
+
+func TestRangeChannel(t *testing.T) {
+	channel := make(chan string)
+
+	go func() {
+		for i := 0; i < 25; i++ {
+			channel <- "Loops : " + strconv.Itoa(i)
+		}
+		close(channel)
+	}()
+
+	// with for range is useful if the channel if many.
+	for data := range channel {
+		fmt.Println("Retrieve data", data)
+	}
+
+	fmt.Println("End of channel")
+}
+
+func TestSelectChannel(t *testing.T) {
+
+	channel1 := make(chan string)
+	channel2 := make(chan string)
+
+	go GiveMeResponse(channel1)
+	go GiveMeResponse(channel2)
+
+	/*
+		With select channel it's possible to get data more than
+		one channel advanced more than for range channel.
+	*/
+	counter := 0
+	for {
+		select {
+		case data := <-channel1:
+			fmt.Println("Retrieving data from channel 1", data)
+			counter++
+		case data := <-channel2:
+			fmt.Println("Retrieving data from channel 2", data)
+			counter++
+		}
+
+		if counter == 2 {
+			break
+		}
+	}
+}
+
+func TestDefaultSelect(t *testing.T) {
+
+	channel1 := make(chan string)
+	channel2 := make(chan string)
+
+	go GiveMeResponse(channel1)
+	go GiveMeResponse(channel2)
+
+	/*
+		With select channel it's possible to get data more than
+		one channel advanced more than for range channel.
+	*/
+	counter := 0
+	for {
+		select {
+		case data := <-channel1:
+			fmt.Println("Retrieving data from channel 1", data)
+			counter++
+		case data := <-channel2:
+			fmt.Println("Retrieving data from channel 2", data)
+			counter++
+		default:
+			fmt.Println("Waiting for the data") // default select is to avoid deadlock.
+		}
+
+		if counter == 2 {
+			break
+		}
+	}
 }
